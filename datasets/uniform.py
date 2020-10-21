@@ -71,7 +71,12 @@ def calc_tile_locations(tile_size, image_size):
     image_size: original image size
     return: locations of the tiles
     """
-    image_size_y, image_size_x = image_size
+    if len(image_size) == 2:
+        image_size_y, image_size_x = image_size
+    elif len(image_size) == 3:
+        image_size_y, image_size_x, num_channels = image_size
+    else:
+        raise RuntimeError(f"Incorrect image input, dims:{image_size}")
     locations = []
     for y in range(image_size_y // tile_size):
         for x in range(image_size_x // tile_size):
@@ -103,10 +108,10 @@ def class_centroids_image(item, tile_size, num_classes, id2trainid):
     #####
     if(cfg.DATASET.CITYSCAPES_CUSTOMCOARSE in label_fn):
             gtCoarse_mask_path = label_fn.replace(cfg.DATASET.CITYSCAPES_CUSTOMCOARSE, os.path.join(cfg.DATASET.CITYSCAPES_DIR, 'gtCoarse/gtCoarse') )
-            gtCoarse_mask_path = gtCoarse_mask_path.replace('leftImg8bit','gtCoarse_labelIds')          
+            gtCoarse_mask_path = gtCoarse_mask_path.replace('leftImg8bit','gtCoarse_labelIds')
             gtCoarse=np.array(Image.open(gtCoarse_mask_path))
 
-    
+
     ####
 
     mask_copy = mask.copy()
@@ -153,9 +158,12 @@ def pooled_class_centroids_all(items, num_classes, id2trainid, tile_size=1024):
                                    tile_size=tile_size)
 
     centroids = defaultdict(list)
-    new_centroids = pool.map(class_centroids_item, items)
-    pool.close()
-    pool.join()
+    new_centroids = []
+    for item in items:
+        new_centroids.append(class_centroids_item(item))
+    # new_centroids = pool.map(class_centroids_item, items)
+    # pool.close()
+    # pool.join()
 
     # combine each image's items into a single global dict
     for image_items in new_centroids:
@@ -230,7 +238,7 @@ def build_centroids(imgs, num_classes, train, cv=None, coarse=False,
         return []
 
     centroid_fn = cfg.DATASET.NAME
-    
+
     if coarse or custom_coarse:
         if coarse:
             centroid_fn += '_coarse'
@@ -251,6 +259,7 @@ def build_centroids(imgs, num_classes, train, cv=None, coarse=False,
         logx.msg('Didn\'t find {}, so building it'.format(json_fn))
 
         if cfg.GLOBAL_RANK==0:
+            import ipdb; ipdb.set_trace()
 
             os.makedirs(cfg.DATASET.CENTROID_ROOT, exist_ok=True)
             # centroids is a dict (indexed by class) of lists of centroids
@@ -271,7 +280,7 @@ def build_centroids(imgs, num_classes, train, cv=None, coarse=False,
             with open(json_fn, 'r') as json_data:
                 centroids = json.load(json_data)
             centroids = {int(idx): centroids[idx] for idx in centroids}
-        
+
     return centroids
 
 

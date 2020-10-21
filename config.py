@@ -49,7 +49,7 @@ cfg = __C
 __C.GLOBAL_RANK = 0
 __C.EPOCH = 0
 # Absolute path to a location to keep some large files, not in this dir.
-__C.ASSETS_PATH = '/home/dcg-adlr-atao-data.cosmos277/assets'
+__C.ASSETS_PATH = '/scratch/local/ssd/csbotos/tmp/assets'
 
 # Use class weighted loss per batch to increase loss for low pixel count classes per batch
 __C.BATCH_WEIGHTING = False
@@ -86,7 +86,7 @@ __C.DATASET.CITYSCAPES_AUG_DIR = ''
 #Mapillary Dataset Dir Location
 __C.DATASET.MAPILLARY_DIR = os.path.join(__C.ASSETS_PATH, 'data/Mapillary/data')
 #Kitti Dataset Dir Location
-__C.DATASET.KITTI_DIR = ''
+__C.DATASET.KITTI_DIR = 'data/KITTI/semantic'
 #SDC Augmented Kitti Dataset Dir Location
 __C.DATASET.KITTI_AUG_DIR = ''
 #Camvid Dataset Dir Location

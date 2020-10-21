@@ -103,7 +103,6 @@ def coarse_cities(root):
 
 
 class Loader(BaseLoader):
-    import ipdb; ipdb.set_trace()
     num_classes = 19
     ignore_label = 255
     trainid_to_name = {}
@@ -117,10 +116,7 @@ class Loader(BaseLoader):
                                      img_transform=img_transform,
                                      label_transform=label_transform)
 
-        ######################################################################
-        # Cityscapes-specific stuff:
-        ######################################################################
-        self.root = cfg.DATASET.CITYSCAPES_DIR
+        self.root = cfg.DATASET.KITTI_DIR
         self.id_to_trainid = cityscapes_labels.label2trainid
         self.trainid_to_name = cityscapes_labels.trainId2name
         self.fine_cities = cities_cv_split(self.root, mode, cfg.DATASET.CV)
@@ -237,6 +233,77 @@ class Loader(BaseLoader):
                    0, 0, 230,
                    119, 11, 32]
         zero_pad = 256 * 3 - len(palette)
+        for i in range(zero_pad):
+            palette.append(0)
+        self.color_mapping = palette
+
+
+class Loader(BaseLoader):
+    num_classes = 19
+    ignore_label = 255
+    trainid_to_name = {}
+    color_mapping = []
+
+    def __init__(self, mode, quality='fine', joint_transform_list=None,
+                 img_transform=None, label_transform=None, eval_folder=None):
+
+        super(Loader, self).__init__(quality=quality, mode=mode,
+                                     joint_transform_list=joint_transform_list,
+                                     img_transform=img_transform,
+                                     label_transform=label_transform)
+
+        root = cfg.DATASET.KITTI_DIR
+        ######################################################################
+        # Assemble image lists
+        ######################################################################
+        if mode == 'folder':
+            self.all_imgs = make_dataset_folder(eval_folder)
+        else:
+            splits = {'train': 'training',
+                      'val': 'training',
+                      'test': 'training'}
+            split_name = splits[mode]
+            img_ext = 'png'
+            mask_ext = 'png'
+            img_root = os.path.join(root, split_name, 'image_2')
+            mask_root = os.path.join(root, split_name, 'semantic_rgb')
+            self.all_imgs = self.find_images(img_root, mask_root, img_ext,
+                                             mask_ext)
+
+
+        import ipdb; ipdb.set_trace()
+
+        self.fill_colormap()
+        logx.msg('all imgs {}'.format(len(self.all_imgs)))
+        self.centroids = uniform.build_centroids(self.all_imgs,
+                                                 self.num_classes,
+                                                 self.train,
+                                                 cv=cfg.DATASET.CV)
+        self.build_epoch()
+
+
+    def fill_colormap(self):
+        palette = [128, 64, 128,
+                   244, 35, 232,
+                   70, 70, 70,
+                   102, 102, 156,
+                   190, 153, 153,
+                   153, 153, 153,
+                   250, 170, 30,
+                   220, 220, 0,
+                   107, 142, 35,
+                   152, 251, 152,
+                   70, 130, 180,
+                   220, 20, 60,
+                   255, 0, 0,
+                   0, 0, 142,
+                   0, 0, 70,
+                   0, 60, 100,
+                   0, 80, 100,
+                   0, 0, 230,
+                   119, 11, 32]
+        zero_pad = 256 * 3 - len(palette)
+
         for i in range(zero_pad):
             palette.append(0)
         self.color_mapping = palette
